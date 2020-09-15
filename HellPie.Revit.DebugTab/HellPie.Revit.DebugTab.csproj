@@ -50,6 +50,14 @@
         <DefineConstants>RELEASE;TRACE</DefineConstants>
     </PropertyGroup>
 
+    <!-- Assembly Dependencies -->
+    <ItemGroup>
+        <Reference Include="UIFramework">
+            <HintPath>$(RevitPath)\UIFramework.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+    </ItemGroup>
+
     <!-- NuGet Dependencies -->
     <ItemGroup>
         <PackageReference Include="Autodesk.Revit.SDK" Version="2021.0.0">
