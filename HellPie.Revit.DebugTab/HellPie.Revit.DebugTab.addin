@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+	<AddIn Type="Application">
+        <Name>Debug Tab Enabled for Revit</Name>
+        <Description>Enable the hidden internal Debug tab in the Revit Ribbon. Compatible with Revit 2014-2021.</Description>
+        <Assembly>HellPie.Revit.DebugTab/HellPie.Revit.DebugTab.dll</Assembly>
+        <FullClassName>HellPie.Revit.DebugTab.App</FullClassName>
+        <ClientId>81DA0C07-123D-4B6F-9B1D-175F59BB409F</ClientId>
+        <VendorId>dev.hellpie</VendorId>
+        <VendorDescription>Diego "HellPie" Rossi, https://hellpie.dev</VendorDescription>
+	</AddIn>
+</RevitAddIns>

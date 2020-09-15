@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+
+    <!-- Global Project Configuration -->
+    <PropertyGroup>
+        <ModuleSet>HellPie.Revit</ModuleSet>
+        <ModuleName>DebugTab</ModuleName>
+        <RevitVersion>2020</RevitVersion>
+        <RevitPath>$(ProgramW6432)\Autodesk\Revit $(RevitVersion)</RevitPath>
+    </PropertyGroup>
+
+    <!-- Project Configuration -->
+    <PropertyGroup>
+        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+        <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
+        <ProjectGuid>{81DA0C07-123D-4B6F-9B1D-175F59BB409F}</ProjectGuid>
+        <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+        <OutputType>Library</OutputType>
+        <AppDesignerFolder>Properties</AppDesignerFolder>
+        <RootNamespace>$(ModuleSet).$(ModuleName)</RootNamespace>
+        <AssemblyName>$(ModuleSet).$(ModuleName)</AssemblyName>
+        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+        <LangVersion>latest</LangVersion>
+        <FileAlignment>512</FileAlignment>
+        <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    </PropertyGroup>
+
+    <!-- Global MSBuild Configuration -->
+    <PropertyGroup>
+        <OutputPath>bin\$(Configuration)</OutputPath>
+        <PlatformTarget>$(Platform)</PlatformTarget>
+        <WarningLevel>4</WarningLevel>
+        <CodeAnalysisRuleSet Condition="Exists('$(ProjectName).ruleset')">$(ProjectName).ruleset</CodeAnalysisRuleSet>
+        <StartAction>Program</StartAction>
+    </PropertyGroup>
+
+    <!-- Debug MSBuild Configuration -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+        <DebugType>full</DebugType>
+        <DebugSymbols>true</DebugSymbols>
+        <DefineConstants>DEBUG;TRACE</DefineConstants>
+        <StartProgram>$(RevitPath)\Revit.exe</StartProgram>
+    </PropertyGroup>
+
+    <!-- Release MSBuild Configuration -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <Optimize>true</Optimize>
+        <DebugType>pdbonly</DebugType>
+        <DefineConstants>RELEASE;TRACE</DefineConstants>
+    </PropertyGroup>
+
+    <!-- NuGet Dependencies -->
+    <ItemGroup>
+        <PackageReference Include="HellPie.Revit.Rainbow" Version="1.2.0" />
+        <PackageReference Include="Autodesk.Revit.SDK" Version="2021.0.0">
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <!-- Global Assemblies Dependencies -->
+    <ItemGroup>
+        <!-- Core -->
+        <Reference Include="System" />
+        <Reference Include="System.Core" />
+        <Reference Include="System.Data" />
+        <!-- Xml And XAML -->
+        <Reference Include="System.Xml" />
+        <Reference Include="System.Xml.Linq" />
+        <Reference Include="System.Xaml" />
+        <!-- WPF Framework -->
+        <Reference Include="PresentationCore" />
+        <Reference Include="PresentationFramework" />
+        <Reference Include="WindowsBase" />
+    </ItemGroup>
+
+    <!-- Shared Assembly Information -->
+    <ItemGroup>
+        <Compile Include="Properties\AssemblyInfo.cs" />
+    </ItemGroup>
+
+    <!-- Revit AddIn File -->
+    <ItemGroup>
+        <Content Include="$(ProjectName).addin">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Include="App.cs" />
+    </ItemGroup>
+
+    <!-- Extra Target Configuration -->
+    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+
+    <!-- Post Build Events -->
+    <Target Name="AfterBuild">
+        <!-- Clean previous builds -->
+        <CallTarget Targets="AfterClean" />
+        <!-- Prepare for execution when in debug mode -->
+        <CallTarget Targets="RunInRevit" Condition="'$(Configuration)' == 'Debug'" />
+        <!-- Prepare production build when in release mode -->
+        <CallTarget Targets="BuildArchive" Condition="'$(Configuration)' == 'Release'" />
+    </Target>
+
+    <!-- Cleanup Events -->
+    <Target Name="AfterClean">
+        <Delete Files="$(APPDATA)\Autodesk\REVIT\Addins\$(RevitVersion)\$(ProjectName).addin" />
+        <RemoveDir Directories="$(APPDATA)\Autodesk\REVIT\Addins\$(RevitVersion)\$(ProjectName)" />
+    </Target>
+
+    <!-- Target Execution in Revit -->
+    <Target Name="RunInRevit">
+        <!-- Copy global files -->
+        <Copy SourceFiles="$(ProjectDir)$(ProjectName).addin" DestinationFolder="$(APPDATA)\Autodesk\REVIT\Addins\$(RevitVersion)" />
+        <MakeDir Directories="$(APPDATA)\Autodesk\REVIT\Addins\$(RevitVersion)\$(ProjectName)" />
+        <MakeDir Directories="$(APPDATA)\Autodesk\REVIT\Addins\$(RevitVersion)\$(ProjectName)\Resources" Condition="Exists('$(ProjectDir)Resources')" />
+        <!-- Select files to be copied -->
+        <ItemGroup>
+            <Libraries Include="$(ProjectDir)$(OutputPath)*.dll" />
+            <Libraries Remove="$(ProjectDir)$(OutputPath)RevitAPI*.dll" />
+            <Libraries Remove="$(ProjectDir)$(OutputPath)AdWindows*.dll" />
+            <Settings Include="$(ProjectDir)*Settings.xml" />
+            <ResourceFiles Include="$(ProjectDir)Resources\*.*" Condition="Exists('$(ProjectDir)Resources')" />
+        </ItemGroup>
+        <!-- Copy files to Revit Addins directory -->
+        <Copy SourceFiles="@(Libraries)" DestinationFolder="$(APPDATA)\Autodesk\REVIT\Addins\$(RevitVersion)\$(ProjectName)" />
+        <Copy SourceFiles="@(Settings)" DestinationFolder="$(APPDATA)\Autodesk\REVIT\Addins\$(RevitVersion)\$(ProjectName)" />
+        <Copy SourceFiles="@(ResourceFiles)" DestinationFolder="$(APPDATA)\Autodesk\REVIT\Addins\$(RevitVersion)\$(ProjectName)\Resources" />
+    </Target>
+
+    <!-- Target Release as Zip Archive -->
+    <Target Name="BuildArchive">
+        <!-- Configure temporary build directories -->
+        <MakeDir Directories="$(TEMP)\$(ProjectGuid)" />
+        <MakeDir Directories="$(TEMP)\$(ProjectGuid)\$(ProjectName)" />
+        <MakeDir Directories="$(TEMP)\$(ProjectGuid)\$(ProjectName)\Resources" Condition="Exists('$(ProjectDir)Resources')" />
+        <!-- Select files to be copied -->
+        <ItemGroup>
+            <AddInFile Include="$(ProjectDir)$(ProjectName).addin" />
+            <Libraries Include="$(ProjectDir)$(OutputPath)*.dll" />
+            <Libraries Remove="$(ProjectDir)$(OutputPath)RevitAPI*.dll" />
+            <Libraries Remove="$(ProjectDir)$(OutputPath)AdWindows.dll" />
+            <Settings Include="$(ProjectDir)*Settings.xml" />
+            <ResourceFiles Include="$(ProjectDir)Resources\*.*" Condition="Exists('$(ProjectDir)Resources')" />
+        </ItemGroup>
+        <!-- Copy files to temporary directory -->
+        <Copy SourceFiles="@(AddInFile)" DestinationFolder="$(TEMP)\$(ProjectGuid)" />
+        <Copy SourceFiles="@(Libraries)" DestinationFolder="$(TEMP)\$(ProjectGuid)\$(ProjectName)" />
+        <Copy SourceFiles="@(Settings)" DestinationFolder="$(TEMP)\$(ProjectGuid)\$(ProjectName)" />
+        <Copy SourceFiles="@(ResourceFiles)" DestinationFolder="$(TEMP)\$(ProjectGuid)\$(ProjectName)\Resources" />
+        <!-- Compress final output into a Zip Archive -->
+        <ZipDirectory DestinationFile="$(ProjectDir)$(OutputPath)$(ProjectName).zip" Overwrite="true" SourceDirectory="$(TEMP)\$(ProjectGuid)" />
+        <!-- Cleanup temporary directory -->
+        <RemoveDir Directories="$(TEMP)\$(ProjectGuid)" />
+    </Target>
+</Project>
