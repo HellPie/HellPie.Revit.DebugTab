@@ -52,7 +52,6 @@
 
     <!-- NuGet Dependencies -->
     <ItemGroup>
-        <PackageReference Include="HellPie.Revit.Rainbow" Version="1.2.0" />
         <PackageReference Include="Autodesk.Revit.SDK" Version="2021.0.0">
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
